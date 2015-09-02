@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.0/semantic.css" rel="stylesheet" />
+
+        <title>Tweet admin</title>
+    </head>
+
+    <body>
+
+    <div id="cards-container" class="ui cards">
+    </div>
+
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.0/semantic.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.1.3/mustache.js"></script>
+    <script id="tweet" type="x-tmpl-mustache">
+        <div class="card">
+            <div class="content">
+                <img class="right floated mini ui image" src="{{tweetData.avatarUrl}}">
+                <div class="header">
+                    {{tweetData.authorName}}
+                </div>
+                <div class="meta">
+                    {{tweetData.authorScreenName}}
+                  </div>
+                <div class="description">
+                    {{tweetData.content}}
+                </div>
+            </div>
+            <div class="extra content">
+                <div class="ui two buttons">
+                    <div class="ui basic green button">Approve</div>
+                    <div class="ui basic red button">Decline</div>
+                </div>
+            </div>
+        </div>
+    </script>
+    <script>
+        var $cardsContainer = $('#cards-container');
+        var tweetTemplate = $('#tweet').html();
+
+        Mustache.parse( tweetTemplate );
+
+        var socket = io.connect('http://localhost:3000');
+        socket.on("new_tweet", function(tweet) {
+            console.log(tweet);
+
+            $cardsContainer.append( Mustache.render(tweetTemplate, { tweetData: tweet }) );
+        });
+    </script>
+    </body>
+</html>
