@@ -7,52 +7,115 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
         <link href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.0/semantic.css" rel="stylesheet" />
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+            }
 
+            .ui.grid .column {
+                overflow-y: auto;
+            }
+        </style>
         <title>Tweet admin</title>
     </head>
 
     <body>
 
-    <div id="cards-container" class="ui cards">
+    <div class="ui equal width grid">
+        <div class="three column row">
+            <div id="newTweetsColumn" class="column">
+                <h3 class="ui top attached block header blue sticky">New tweets</h3>
+                <div class="ui items"></div>
+            </div>
+            <div id="acceptedTweetsColumn" class="column">
+                <h3 class="ui top attached block header green sticky">Accepted tweets</h3>
+                <div class="ui items"></div>
+            </div>
+            <div id="refusedTweetsColumn" class="column">
+                <h3 class="ui top attached block header red sticky">Refused tweets</h3>
+                <div class="ui items"></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.0/semantic.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.1.3/mustache.js"></script>
-    <script id="tweet" type="x-tmpl-mustache">
-        <div class="card">
-            <div class="content">
-                <img class="right floated mini ui image" src="{{tweetData.avatarUrl}}">
-                <div class="header">
-                    {{tweetData.authorName}}
-                </div>
-                <div class="meta">
-                    {{tweetData.authorScreenName}}
-                  </div>
-                <div class="description">
-                    {{tweetData.content}}
-                </div>
+    <script id="tweet-item" type="x-tmpl-mustache">
+        <div class="item" data-card-id="{{id}}">
+            <div class="ui tiny image">
+                <img src="{{avatarUrl}}">
             </div>
-            <div class="extra content">
-                <div class="ui two buttons">
-                    <div class="ui basic green button">Approve</div>
-                    <div class="ui basic red button">Decline</div>
+            <div class="middle aligned content">
+                <div class="header">
+                    {{authorName}}
+                </div>
+                <div class="description">
+                    <p>{{content}}</p>
+                </div>
+                <div class="extra">
+                    <div class="ui right floated buttons">
+                        <button class="ui green button">Accept</button>
+                        <div class="or" data-text="or"></div>
+                        <button class="ui red button">Refuse</button>
+                    </div>
                 </div>
             </div>
         </div>
     </script>
     <script>
-        var $cardsContainer = $('#cards-container');
-        var tweetTemplate = $('#tweet').html();
+
+        $('.ui.grid .column').css('max-height', $('body').height());
+        $('.ui.sticky').each(function(element, index) {
+
+            var $self = $(element);
+            var $context = $self.closest('.column');
+            var $scrollContext = $context;
+
+            if (!$context.length) return false;
+
+            $self.sticky({
+                context: $scrollContext,
+                scrollContext: $scrollContext
+            });
+        });
+
+        var $newTweetsColumn = $("#newTweetsColumn").find(".items");
+        var $acceptedTweetsColumn = $("#acceptedTweetsColumn").find(".items");
+        var $refusedTweetsColumn = $("#refusedTweetsColumn").find(".items");
+
+        var tweetTemplate = $('#tweet-item').html();
 
         Mustache.parse( tweetTemplate );
 
         var socket = io.connect('http://localhost:3000');
-        socket.on("new_tweet", function(tweet) {
-            console.log(tweet);
+        socket.on("tweet:new", function(tweet) {
+            $newTweetsColumn.append( Mustache.render(tweetTemplate, tweet) );
+        });
 
-            $cardsContainer.append( Mustache.render(tweetTemplate, { tweetData: tweet }) );
+        socket.on("tweet:accepted", function(tweet) {
+
+        });
+
+        socket.on("tweet:refused", function(tweet) {
+
+        });
+
+        $('.items').on('click', '.item button.button', function(cardButton) {
+
+            var $cardButton = $(cardButton);
+            var cardId = $cardButton.closest('.card').attr('data-card-id');
+
+            if ($cardButton.hasClass('green')) {
+                socket.emit('tweet:refuse:start', { tweet_id: cardId })
+            }
+            else if ($cardButton.hasClass('red')) {
+                socket.emit('tweet:accept:start', { tweet_id: cardId })
+            }
         });
     </script>
     </body>
