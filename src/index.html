@@ -65,6 +65,7 @@
     <script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.0/semantic.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.1.3/mustache.js"></script>
+    <script src="https://cdn.rawgit.com/pyrsmk/qwest/master/qwest.min.js"></script>
     <script id="new-tweet" type="x-tmpl-mustache">
     <div class="row new-tweet" data-tweet-id="{{id}}">
         <div class="two wide column middle aligned">
@@ -108,6 +109,14 @@
                 scrollContext: $scrollContext
             });
         });
+        qwest
+            .get('http://localhost:3000/new-tweets')
+            .then(function(xhr, newTweets) {
+                newTweets.forEach(function(tweet) {
+                    $newTweetsColumn.prepend( Mustache.render(tweetTemplate, tweet) );
+                });
+            })
+            .then(openSocket);
 
         var $newTweetsColumn = $("#newTweetsColumn").find(".items");
         var $acceptedTweetsColumn = $("#acceptedTweetsColumn").find(".items");
