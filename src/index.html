@@ -96,11 +96,7 @@
     <script>
 
         $('.ui.grid .column').css('max-height', $('body').height());
-        $('.ui.sticky').each(function(element, index) {
 
-            var $self = $(element);
-            var $context = $self.closest('.column');
-            var $scrollContext = $context;
 
             if (!$context.length) return false;
 
