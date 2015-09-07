@@ -46,16 +46,26 @@
     <body>
 
     <div class="ui equal width aligned grid">
+        <div class="column">
+            <h3>New tweets</h3>
+        </div>
+        <div class="column">
+            <h3>Accepted tweets</h3>
+        </div>
+        <div class="column">
+            <h3>Refused tweets</h3>
+        </div>
+    </div>
+
+    <div class="ui equal width aligned grid">
         <div class="row">
             <div id="newTweetsColumn" class="column">
                 <div class="items-container ui grid"></div>
             </div>
             <div id="acceptedTweetsColumn" class="column">
-                <h3 class="ui top attached block header green sticky">Accepted tweets</h3>
                 <div class="items-container ui grid"></div>
             </div>
             <div id="refusedTweetsColumn" class="column">
-                <h3 class="ui top attached block header red sticky">Refused tweets</h3>
                 <div class="items-container ui grid"></div>
             </div>
         </div>
@@ -95,7 +105,7 @@
     </script>
     <script>
 
-        $('.ui.grid .column').css('max-height', $('body').height());
+        $(window).on('resize', handleWindowResize);
 
         var socket;
         var $newTweetsColumn = $("#newTweetsColumn").find(".items-container");
@@ -122,21 +132,23 @@
                 $newTweetsColumn.prepend( Mustache.render(tweetTemplate, tweet) );
             });
 
-            socket.on("tweet:accepted", function(tweet) {
-
+            socket.on("tweet:accepted", function(tweet_id) {
+                console.log('tweet:accepted', tweet_id);
+                $(".new-tweet[data-tweet-id='"+ tweet_id +"']").prependTo($acceptedTweetsColumn);
             });
 
-            socket.on("tweet:refused", function(tweet) {
-
+            socket.on("tweet:refused", function(tweet_id) {
+                $(".new-tweet[data-tweet-id='"+ tweet_id +"']").prependTo($refusedTweetsColumn);
             });
 
             $('.items-container').on('click', '.new-tweet button.button', onTweetActionClick);
         }
 
-        onTweetActionClick = function(e) {
+        function onTweetActionClick(e) {
 
             var $cardButton = $(e.currentTarget);
             var $tweet = $cardButton.closest('.new-tweet');
+            var $icon = $cardButton.find('.icon').addClass('indeterminate');
             var cardId = $tweet.attr('data-tweet-id');
 
             if ($cardButton.hasClass('green')) {
@@ -147,8 +159,14 @@
                 console.log('refuse ' + cardId);
                 socket.emit('tweet:refuse:start', cardId)
             }
-        };
+        }
 
+        function handleWindowResize() {
+            $('.ui.grid .column').css('max-height', $('body').height());
+        }
+
+        handleWindowResize();
+        
     </script>
     </body>
 </html>
