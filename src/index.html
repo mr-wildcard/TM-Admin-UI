@@ -97,14 +97,14 @@
 
         $('.ui.grid .column').css('max-height', $('body').height());
 
+        var socket;
+        var $newTweetsColumn = $("#newTweetsColumn").find(".items-container");
+        var $acceptedTweetsColumn = $("#acceptedTweetsColumn").find(".items-container");
+        var $refusedTweetsColumn = $("#refusedTweetsColumn").find(".items-container");
+        var tweetTemplate = $('#new-tweet').html();
 
-            if (!$context.length) return false;
+        Mustache.parse( tweetTemplate );
 
-            $self.sticky({
-                context: $scrollContext,
-                scrollContext: $scrollContext
-            });
-        });
         qwest
             .get('http://localhost:3000/new-tweets')
             .then(function(xhr, newTweets) {
@@ -114,39 +114,41 @@
             })
             .then(openSocket);
 
-        var $newTweetsColumn = $("#newTweetsColumn").find(".items");
-        var $acceptedTweetsColumn = $("#acceptedTweetsColumn").find(".items");
-        var $refusedTweetsColumn = $("#refusedTweetsColumn").find(".items");
+        function openSocket() {
 
-        var tweetTemplate = $('#tweet-item').html();
+            socket = io.connect('http://localhost:3000');
 
-        Mustache.parse( tweetTemplate );
+            socket.on("tweet:new", function(tweet) {
+                $newTweetsColumn.prepend( Mustache.render(tweetTemplate, tweet) );
+            });
 
-        var socket = io.connect('http://localhost:3000');
-        socket.on("tweet:new", function(tweet) {
-            $newTweetsColumn.append( Mustache.render(tweetTemplate, tweet) );
-        });
+            socket.on("tweet:accepted", function(tweet) {
 
-        socket.on("tweet:accepted", function(tweet) {
+            });
 
-        });
+            socket.on("tweet:refused", function(tweet) {
 
-        socket.on("tweet:refused", function(tweet) {
+            });
 
-        });
+            $('.items-container').on('click', '.new-tweet button.button', onTweetActionClick);
+        }
 
-        $('.items').on('click', '.item button.button', function(cardButton) {
+        onTweetActionClick = function(e) {
 
-            var $cardButton = $(cardButton);
-            var cardId = $cardButton.closest('.card').attr('data-card-id');
+            var $cardButton = $(e.currentTarget);
+            var $tweet = $cardButton.closest('.new-tweet');
+            var cardId = $tweet.attr('data-tweet-id');
 
             if ($cardButton.hasClass('green')) {
-                socket.emit('tweet:refuse:start', { tweet_id: cardId })
+                console.log('accept ' + cardId);
+                socket.emit('tweet:accept:start', cardId)
             }
             else if ($cardButton.hasClass('red')) {
-                socket.emit('tweet:accept:start', { tweet_id: cardId })
+                console.log('refuse ' + cardId);
+                socket.emit('tweet:refuse:start', cardId)
             }
-        });
+        };
+
     </script>
     </body>
 </html>
